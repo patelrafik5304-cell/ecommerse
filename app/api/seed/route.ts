@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 
 export async function POST() {
-  const { count } = await supabaseServer.from("products").select("*", { count: "exact", head: true });
+  const supabase = getSupabaseServer();
+
+  const { count } = await supabase.from("products").select("*", { count: "exact", head: true });
 
   if ((count || 0) > 0) {
     return NextResponse.json({ message: "Already seeded" });
@@ -23,7 +25,7 @@ export async function POST() {
     { name: "Coconut Dream", description: "Creamy coconut ice cream with toasted coconut flakes", price: 6.49, image: "🥥", category: "Premium", stock: 20 },
   ];
 
-  const { error } = await supabaseServer.from("products").insert(products);
+  const { error } = await supabase.from("products").insert(products);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ message: "Seeded 12 products!" });

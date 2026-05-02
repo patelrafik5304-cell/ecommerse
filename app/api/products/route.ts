@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 
 export async function GET() {
-  const { data: products, error } = await supabaseServer
+  const supabase = getSupabaseServer();
+  const { data: products, error } = await supabase
     .from("products")
     .select("*")
     .order("created_at", { ascending: false });

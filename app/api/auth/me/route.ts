@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
   const accessToken = req.cookies.get("sb-access-token")?.value;
-  const refreshToken = req.cookies.get("sb-refresh-token")?.value;
 
   if (!accessToken) {
     return NextResponse.json({ user: null });
   }
 
-  const { data, error } = await supabaseServer.auth.getUser(accessToken);
+  const supabase = getSupabaseServer();
+  const { data, error } = await supabase.auth.getUser(accessToken);
 
   if (error || !data.user) {
     return NextResponse.json({ user: null });
   }
 
-  const { data: profile } = await supabaseServer
+  const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", data.user.id)

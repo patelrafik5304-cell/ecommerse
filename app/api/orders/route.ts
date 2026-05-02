@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase";
+import { getSupabaseServer } from "@/lib/supabase";
 
 async function getUser(req: NextRequest) {
   const token = req.cookies.get("sb-access-token")?.value;
   if (!token) return null;
-  const { data } = await supabaseServer.auth.getUser(token);
+  const supabase = getSupabaseServer();
+  const { data } = await supabase.auth.getUser(token);
   return data.user;
 }
 
@@ -12,7 +13,8 @@ export async function POST(req: NextRequest) {
   const user = await getUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: cart } = await supabaseServer
+  const supabase = getSupabaseServer();
+  const { data: cart } = await supabase
     .from("cart")
     .select("*, product:products(*)")
     .eq("user_id", user.id);
@@ -24,14 +26,14 @@ export async function POST(req: NextRequest) {
   const total = cart.reduce((sum: number, item: any) => sum + item.product.price * item.quantity, 0);
   const items = cart.map((i: any) => ({ name: i.product.name, quantity: i.quantity, price: i.product.price }));
 
-  await supabaseServer.from("orders").insert({
+  await supabase.from("orders").insert({
     user_id: user.id,
     total,
     status: "confirmed",
     items: JSON.stringify(items),
   });
 
-  await supabaseServer.from("cart").delete().eq("user_id", user.id);
+  await supabase.from("cart").delete().eq("user_id", user.id);
 
   return NextResponse.json({ success: true });
 }
@@ -40,7 +42,8 @@ export async function GET(req: NextRequest) {
   const user = await getUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: orders, error } = await supabaseServer
+  const supabase = getSupabaseServer();
+  const { data: orders, error } = await supabase
     .from("orders")
     .select("*")
     .eq("user_id", user.id)
